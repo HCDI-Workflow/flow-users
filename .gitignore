@@ -4,3 +4,6 @@ src/.env
 .env
 *__pycache__*
 .idea
+.cert
+Jasur
+DS_Store

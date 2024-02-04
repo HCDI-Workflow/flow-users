@@ -69,9 +69,9 @@ class UserDAO:
             id=user['id'],
             username=user['username'],
             email=user['email'],
-            name=user['name'],
+            first_name=user['first_name'],
+            last_name=user['last_name'],
             password=user['password'],
-            oath_token=user['oath_token'],
             auth_type=user['auth_type']
         )
 
@@ -91,11 +91,13 @@ class UserDAO:
 
         # SQL query to insert a new user and return the created record
         query = sqlalchemy.text("""
-            INSERT INTO users (username, email, name, password, oath_token, auth_type) 
-            VALUES (:username, :email, :name, :password, :oath_token, :auth_type)
+            INSERT INTO users (username, email, first_name, last_name, password,  auth_type) 
+            VALUES (:username, :email, :first_name, :last_name, :password, :auth_type)
             RETURNING *;
         """)
+  
         user_data = UserDTO.from_model(user)
+        print("User Data: ",user_data)
 
         # check if user exists
         result_dict =  get_user_by_email(user_data['email'])
@@ -124,21 +126,23 @@ class UserDAO:
                 engine.dispose()  # Properly close the connection
 
     @staticmethod
+
     def update_user(user_id, user_data):
         """
         Update an existing user's details.
         """
         engine = manager.connect_with_connector()
-        query = sqlalchemy.text("""
+        query = sqlalchemy.text(f"""
             UPDATE users SET 
             username = :username, 
-            name = :name, 
-            password = :password, 
+            first_name = :first_name,
+            last_name = :last_name, 
+            password = :password
             WHERE id = :id;
         """)
         try:
             with engine.connect() as connection:
-                connection.execute(query, {**user_data, 'id': user_id})
+                connection.execute(query, user_data)
                 connection.commit()
                 return True
         except Exception as e:
@@ -149,6 +153,7 @@ class UserDAO:
         finally:
             if engine:
                 engine.dispose()  # Properly close the connection
+
 
     @staticmethod
     def delete_user(user_id):
@@ -198,9 +203,9 @@ class UserDAO:
                     id=user['id'],
                     username=user['username'],
                     email=user['email'],
-                    name=user['name'],
+                    first_name=user['first_name'],
+                    last_name=user['last_name'],
                     password=user['password'],
-                    oath_token=user['oath_token'],
                     auth_type=user['auth_type']
                 )
         return None

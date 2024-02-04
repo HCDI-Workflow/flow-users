@@ -29,6 +29,7 @@ class DatabaseManager:
         db_user = current_app.config["DB_USER"]  # e.g. 'my-db-user'
         db_pass = current_app.config["DB_PASS"]  # e.g. 'my-db-password'
         db_name = current_app.config["DB_NAME"]  # e.g. 'my-database'
+        print(f"instance_connection_name: {instance_connection_name}")
 
         ip_type = IPTypes.PRIVATE if current_app.config.get("PRIVATE_IP") else IPTypes.PUBLIC
 

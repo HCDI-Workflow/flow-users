@@ -14,10 +14,10 @@ from user import create_app
 app = create_app()
 
 # Ensure environment variables are set
-required_env_vars = ["JWT_SECRET_KEY", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"]
-for var in required_env_vars:
-    if not os.getenv(var):
-        raise EnvironmentError(f"Missing required environment variable: {var}")
+# required_env_vars = ["JWT_SECRET_KEY", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"]
+# for var in required_env_vars:
+#     if not os.getenv(var):
+#         raise EnvironmentError(f"Missing required environment variable: {var}")
 
 
 jwt = JWTManager(app)
@@ -44,14 +44,14 @@ def create_user():
     data = request.get_json() # get user data
     user_model = UserDTO.to_model(data) # Parse and validate DTO
 
-    print(data)
     if user_model is None:
         return {"error": "No User"}
     # Hash password
     user_model.password = hash_password(user_model.password)
-
+    print("User_model",user_model)
     # Attempt to save model to database
     result = UserDAO.create_user(user_model) # returns status and resource in dic
+    print("Result",result)
     created_user = result['resource']
     status = result['status']
     access_token = create_access_token(identity=created_user['id'])
@@ -89,10 +89,10 @@ def login_user():
         user_dto_response = UserDTO.from_model(user)
         # Use if just want logged in confirmation
         response = make_response(jsonify(logged_in_as=user_dto_response['username'], 
-                                            name=user_dto_response['name'],
+                                            first_name=user_dto_response['first_name'],
+                                            last_name=user_dto_response['last_name'],
                                             email=user_dto_response['email'],
                                             auth_type = user_dto_response['auth_type'],
-                                            oath_token = user_dto_response['oath_token'],
                                             auth_token=access_token), 200)
 
         if app.config['JWT_TOKEN_LOCATION'] == ['cookies']:
@@ -147,10 +147,10 @@ def google_authorize():
         user_dto_response = UserDTO.from_model(user)
         # Use if just want logged in confirmation
         response = make_response(jsonify(logged_in_as=user_dto_response['username'], 
-                                            name=user_dto_response['name'],
+                                            first_name=user_dto_response['first_name'],
+                                            last_name=user_dto_response['last_name'],
                                             email=user_dto_response['email'],
                                             auth_type = user_dto_response['auth_type'],
-                                            oath_token = user_dto_response['oath_token'],
                                             auth_token=access_token), 200)
 
         if app.config['JWT_TOKEN_LOCATION'] == ['cookies']:
@@ -175,10 +175,10 @@ def get_user():
     if user:
         user_dto_response = UserDTO.from_model(user)  # Convert to DTO
         response = jsonify(username=user_dto_response['username'], 
-                                         name=user_dto_response['name'],
+                                         first_name=user_dto_response['first_name'],
+                                         last_name=user_dto_response['last_name'],
                                          email=user_dto_response['email'],
                                          auth_type = user_dto_response['auth_type'],
-                                         oath_token = user_dto_response['oath_token'],
                                          id=user_dto_response['id']
                                          )
         return response, 200
@@ -194,7 +194,7 @@ def update_user():
     Returns the user info after updated
     """
     data = request.get_json() # user inputed updates
-    allowed_fields = ['username','name','password']
+    allowed_fields = ['username','first_name','last_name', 'password']
 
     for field in data.keys():
         if field not in allowed_fields:
@@ -216,10 +216,10 @@ def update_user():
     user_updated_bool = UserDAO.update_user(current_user_id, user_dto_response) # update user
     if user_updated_bool:
         response = jsonify(username=user_dto_response['username'], 
-                                         name=user_dto_response['name'],
+                                         first_name=user_dto_response['first_name'],
+                                         last_name=user_dto_response['last_name'],
                                          email=user_dto_response['email'],
                                          auth_type = user_dto_response['auth_type'],
-                                         oath_token = user_dto_response['oath_token'],
                                          id=user_dto_response['id']
                                          )
         return response, 200

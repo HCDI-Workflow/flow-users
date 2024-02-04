@@ -11,7 +11,8 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(255), nullable=False)  # Assuming email is a string
-    name = db.Column(db.String(100), nullable=False)   # Increased length for name
+    first_name = db.Column(db.String(100), nullable=False)   # Increased length for first_name
+    last_name = db.Column(db.String(100), nullable=False)   # Increased length for last_name
     password = db.Column(db.String(100), nullable=True) # Password can be nullable
     auth_type = db.Column(db.String(50), nullable=False, default='local')  # New field for authentication type
     oath_token = db.Column(db.String(100), nullable=True) # Oath token can also be nullable

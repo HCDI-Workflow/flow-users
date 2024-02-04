@@ -13,34 +13,52 @@ class UserDTO:
                 'id': user.id,
                 'username': user.username,
                 'email': user.email,
-                'name': user.name,
-                # 'password': user.password,
-                # 'oath_token': user.oath_token,
-                # 'auth_type':user.auth_type
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'password': user.password,
+                'auth_type':user.auth_type
                 # Exclude password, oath_token, and auth_type for security
             }
         except:
             return None
-
+    @staticmethod
+    def from_model_update(user):
+        """
+        Transforms a User model instance into a DTO format.
+        """
+        try:
+            return {
+                'username': user.username,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'password': user.password,
+                # Exclude password, oath_token, and auth_type for security
+            }
+        except:
+            return None
+        
     @staticmethod
     def to_model(data):
         """
         Returns model if value, otherwise returns None
         """
         # Assuming a User class and a password hashing function exist
+        print("to_model",data)
         try:
-            if 'username' not in data or 'email' not in data or 'name' not in data:
+            if 'username' not in data or 'email' not in data or 'first_name' not in data or 'last_name' not in data:
+                print("Missing mandatory user fields")
                 raise ValueError("Missing mandatory user fields")
 
             password = data.get('password')
+            print("Passed check")
 
             return User(
                 id=data.get('id'),
                 username=data['username'],
                 email=data['email'],
-                name=data['name'],
+                first_name=data['first_name'],
+                last_name=data['last_name'],
                 password=password,
-                oath_token=data.get('oath_token', None),
                 auth_type=data.get('auth_type', 'local')
             )
         except:
