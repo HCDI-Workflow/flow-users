@@ -6,4 +6,4 @@ src/.env
 .idea
 .cert
 Jasur
-DS_Store
+.DS_Store
