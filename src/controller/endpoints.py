@@ -35,36 +35,54 @@ oauth.register(
     client_kwargs={'scope': 'openid email profile'},
 )
 
-
 bp = Blueprint('user-endpoints', __name__, url_prefix='/api/user')
 
-# Email + password 
+
+def auth_user_profile(access_token, user_dto_response):
+    print(f'User DTO: {user_dto_response}')
+    if user_dto_response is None:
+        return {'error': "No User"}
+    user_type = {
+        'id': user_dto_response['id'],
+        'username': user_dto_response['username'],
+        'first_name': user_dto_response['first_name'],
+        'last_name': user_dto_response['last_name'],
+        'email': user_dto_response['email'],
+        'auth_type': user_dto_response['auth_type']
+    }
+    return {'auth_token': access_token, 'user': user_type}
+
+
+# Email + password
 @bp.route('/register', methods=['POST'])
 def create_user():
-    data = request.get_json() # get user data
-    user_model = UserDTO.to_model(data) # Parse and validate DTO
+    data = request.get_json()  # get user data
+    user_model = UserDTO.to_model(data)  # Parse and validate DTO
 
     if user_model is None:
         return {"error": "No User"}
     # Hash password
     user_model.password = hash_password(user_model.password)
-    print("User_model",user_model)
     # Attempt to save model to database
-    result = UserDAO.create_user(user_model) # returns status and resource in dic
-    print("Result",result)
-    created_user = result['resource']
+    result = UserDAO.create_user(user_model)  # returns status and resource in dic
+
+    created_user = result.get('resource')
     status = result['status']
+    print(f'user result: {result}\n Created user: {created_user}')
     access_token = create_access_token(identity=created_user['id'])
 
-    safe_to_return = UserDTO.from_model(created_user)
+    # user_profile = UserDTO.from_model(created_user)
+    safe_to_return = auth_user_profile(access_token, created_user)
+
 
     # format response
     if app.config['JWT_TOKEN_LOCATION'] == ['cookies']:
-        response = make_response(jsonify(user=safe_to_return,status=status), 201)
-        set_access_cookies(response, access_token) # include access_token as cookie
+        response = make_response(jsonify(safe_to_return), 201)
+        set_access_cookies(response, access_token)  # include access_token as cookie
     else:
-        response = make_response(jsonify(user=safe_to_return,status=status,auth_token=access_token), 201)
+        response = make_response(jsonify(safe_to_return), 201)
 
+    print('Response: ', response)
     return response
 
 
@@ -74,31 +92,31 @@ def login_user():
     Login using email password
     """
     data = request.get_json()
+    print(f'Login data: {data}')
 
     # Make sure fields are there
-    required_fields = ['email','password']
+    required_fields = ['email', 'password']
     for field in required_fields:
         if field not in data.keys():
-            return {'error':"Invalid fields"}, 400
-        
+            return {'error': "Invalid fields"}, 400
+
     # Continue after checks
     user = UserDAO.get_user_by_credentials(data['email'], data['password'])
 
     if user:
         access_token = create_access_token(identity=user.id)
         user_dto_response = UserDTO.from_model(user)
-        # Use if just want logged in confirmation
-        response = make_response(jsonify(logged_in_as=user_dto_response['username'], 
-                                            first_name=user_dto_response['first_name'],
-                                            last_name=user_dto_response['last_name'],
-                                            email=user_dto_response['email'],
-                                            auth_type = user_dto_response['auth_type'],
-                                            auth_token=access_token), 200)
 
+        auth_user = auth_user_profile(access_token, user_dto_response)
+        # Use if just want logged in confirmation
+        response = make_response(jsonify(auth_user), 200)
+
+        print(f'User: {response}')
         if app.config['JWT_TOKEN_LOCATION'] == ['cookies']:
-            set_access_cookies(response, access_token)# Set the JWT as a cookie in the response
+            set_access_cookies(response, access_token)  # Set the JWT as a cookie in the response
         return response
     return {'error': 'Invalid credentials'}, 401
+
 
 # Google OAUTH
 @bp.route('/login/google')
@@ -117,6 +135,7 @@ def google_login():
     """
     redirect_uri = url_for('user-endpoints.google_authorize', _external=True)
     return oauth.google.authorize_redirect(redirect_uri)
+
 
 @bp.route('/login/google/authorize')
 def google_authorize():
@@ -146,19 +165,18 @@ def google_authorize():
         access_token = create_access_token(identity=user.id)
         user_dto_response = UserDTO.from_model(user)
         # Use if just want logged in confirmation
-        response = make_response(jsonify(logged_in_as=user_dto_response['username'], 
-                                            first_name=user_dto_response['first_name'],
-                                            last_name=user_dto_response['last_name'],
-                                            email=user_dto_response['email'],
-                                            auth_type = user_dto_response['auth_type'],
-                                            auth_token=access_token), 200)
+        response = make_response(jsonify(logged_in_as=user_dto_response['username'],
+                                         first_name=user_dto_response['first_name'],
+                                         last_name=user_dto_response['last_name'],
+                                         email=user_dto_response['email'],
+                                         auth_type=user_dto_response['auth_type'],
+                                         auth_token=access_token), 200)
 
         if app.config['JWT_TOKEN_LOCATION'] == ['cookies']:
-            set_access_cookies(response, access_token)# Set the JWT as a cookie in the response
+            set_access_cookies(response, access_token)  # Set the JWT as a cookie in the response
         return response
-    
-    return jsonify(error='Authentication failed'), 401
 
+    return jsonify(error='Authentication failed'), 401
 
 
 @bp.route('/', methods=['GET'])
@@ -169,21 +187,22 @@ def get_user():
 
     """
 
-    current_user_id = get_jwt_identity() # decodes token
-    user = UserDAO.get_user_by_id(current_user_id) # user is a dict
-    
+    current_user_id = get_jwt_identity()  # decodes token
+    user = UserDAO.get_user_by_id(current_user_id)  # user is a dict
+
     if user:
         user_dto_response = UserDTO.from_model(user)  # Convert to DTO
-        response = jsonify(username=user_dto_response['username'], 
-                                         first_name=user_dto_response['first_name'],
-                                         last_name=user_dto_response['last_name'],
-                                         email=user_dto_response['email'],
-                                         auth_type = user_dto_response['auth_type'],
-                                         id=user_dto_response['id']
-                                         )
+        response = jsonify(username=user_dto_response['username'],
+                           first_name=user_dto_response['first_name'],
+                           last_name=user_dto_response['last_name'],
+                           email=user_dto_response['email'],
+                           auth_type=user_dto_response['auth_type'],
+                           id=user_dto_response['id']
+                           )
         return response, 200
 
     return jsonify(error='User not found'), 404
+
 
 @bp.route('/', methods=['PUT'])
 @jwt_required()
@@ -193,17 +212,17 @@ def update_user():
 
     Returns the user info after updated
     """
-    data = request.get_json() # user inputed updates
-    allowed_fields = ['username','first_name','last_name', 'password']
+    data = request.get_json()  # user inputed updates
+    allowed_fields = ['username', 'first_name', 'last_name', 'password']
 
     for field in data.keys():
         if field not in allowed_fields:
-            return {'error':"Invalid input"}, 400
+            return {'error': "Invalid input"}, 400
 
-    current_user_id = get_jwt_identity() # get id of user
-    user_current = UserDAO.get_user_by_id(current_user_id) # user model currently
-    user_dto_response = UserDTO.from_model(user_current) # convert to dict
-    original = user_dto_response.copy() # save incase needed for failure to update
+    current_user_id = get_jwt_identity()  # get id of user
+    user_current = UserDAO.get_user_by_id(current_user_id)  # user model currently
+    user_dto_response = UserDTO.from_model(user_current)  # convert to dict
+    original = user_dto_response.copy()  # save incase needed for failure to update
 
     # Update
     for key, value in data.items():
@@ -211,20 +230,20 @@ def update_user():
             user_dto_response[key] = hash_password(value)
         else:
             user_dto_response[key] = value
-    
-    
-    user_updated_bool = UserDAO.update_user(current_user_id, user_dto_response) # update user
+
+    user_updated_bool = UserDAO.update_user(current_user_id, user_dto_response)  # update user
     if user_updated_bool:
-        response = jsonify(username=user_dto_response['username'], 
-                                         first_name=user_dto_response['first_name'],
-                                         last_name=user_dto_response['last_name'],
-                                         email=user_dto_response['email'],
-                                         auth_type = user_dto_response['auth_type'],
-                                         id=user_dto_response['id']
-                                         )
+        response = jsonify(username=user_dto_response['username'],
+                           first_name=user_dto_response['first_name'],
+                           last_name=user_dto_response['last_name'],
+                           email=user_dto_response['email'],
+                           auth_type=user_dto_response['auth_type'],
+                           id=user_dto_response['id']
+                           )
         return response, 200
 
     return jsonify(error=f"Failed to update {original['username']}'s account"), 404
+
 
 @bp.route('/', methods=['DELETE'])
 @jwt_required()
@@ -241,6 +260,8 @@ def delete_user():
         return {'error': 'User does not exist'}, 404
 
     UserDAO.delete_user(current_user_id)
-    return {'message': f'Account for {current_user_obj.username} with email {current_user_obj.email} deleted successfully'}, 200
+    return {
+        'message': f'Account for {current_user_obj.username} with email {current_user_obj.email} deleted successfully'}, 200
+
 
 app.register_blueprint(bp)

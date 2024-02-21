@@ -19,7 +19,7 @@ def create_app(test_config=None) -> Flask:
         DATABASE=os.path.join(app.instance_path, 'company.psql'),
     )
     app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
-    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
+    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=4)
 
     # Use cookies rather than header
     # app.config['JWT_TOKEN_LOCATION'] = ['cookies']

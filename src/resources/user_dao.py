@@ -97,11 +97,9 @@ class UserDAO:
         """)
   
         user_data = UserDTO.from_model(user)
-        print("User Data: ",user_data)
-
         # check if user exists
-        result_dict =  get_user_by_email(user_data['email'])
-        exist_bool = (result_dict!=None)
+        result_dict = get_user_by_email(user_data['email'])
+        exist_bool = (result_dict is not None)
         if exist_bool:
             return {'status': 'User already exists', 'resource':result_dict}
 
