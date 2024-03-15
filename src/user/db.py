@@ -14,7 +14,40 @@ class DatabaseManager:
     def __init__(self):
         self.logger = logging.getLogger()
 
-    def connect_with_connector(self) -> sqlalchemy.engine.base.Engine:
+    def connect_with_connector(self, is_local=True) -> sqlalchemy.engine.base.Engine:
+        if is_local:
+            return self.connect_with_local()
+        return self.connect_with_cloud()
+
+    def connect_with_local(self) -> sqlalchemy.engine.base.Engine:
+        """
+            Initializes a connection pool for the LOCAL database.
+        """
+        db_user = current_app.config["LOCAL_DB_USER"]  # e.g. 'my-db-user'
+        db_pass = current_app.config["LOCAL_DB_PASS"]  # e.g. 'my-db-password'
+        db_name = current_app.config["LOCAL_DB_NAME"]  # e.g. 'my-database'
+
+        def getconn() -> pg8000.dbapi.Connection:
+            conn: pg8000.dbapi.Connection = pg8000.connect(
+                user=db_user,
+                password=db_pass,
+                database=db_name,
+            )
+            return conn
+
+        if 'pool' not in g:
+            g.pool = sqlalchemy.create_engine(
+                "postgresql+pg8000://",
+                creator=getconn,
+                pool_size=5,
+                max_overflow=2,
+                pool_timeout=30,
+                pool_recycle=1800,
+            )
+            self.logger.info(f"Connected to DB")
+        return g.pool
+
+    def connect_with_cloud(self) -> sqlalchemy.engine.base.Engine:
         """
         Initializes a connection pool for a Cloud SQL instance of Postgres.
         Uses the Cloud SQL Python Connector package.
@@ -29,7 +62,6 @@ class DatabaseManager:
         db_user = current_app.config["DB_USER"]  # e.g. 'my-db-user'
         db_pass = current_app.config["DB_PASS"]  # e.g. 'my-db-password'
         db_name = current_app.config["DB_NAME"]  # e.g. 'my-database'
-        print(f"instance_connection_name: {instance_connection_name}")
 
         ip_type = IPTypes.PRIVATE if current_app.config.get("PRIVATE_IP") else IPTypes.PUBLIC
 
@@ -84,7 +116,6 @@ class DatabaseManager:
         pool = self.connect_with_connector()
         with current_app.open_resource('schema.sql') as f:
             sql_statement = f.read().decode('utf8').split(';')
-            print(sql_statement)
             with pool.connect() as cursor:
                 transaction = cursor.begin()
                 for command in sql_statement:

@@ -43,14 +43,11 @@ class UserDTO:
         Returns model if value, otherwise returns None
         """
         # Assuming a User class and a password hashing function exist
-        print("to_model",data)
         try:
             if 'username' not in data or 'email' not in data or 'first_name' not in data or 'last_name' not in data:
-                print("Missing mandatory user fields")
                 raise ValueError("Missing mandatory user fields")
 
             password = data.get('password')
-            print("Passed check")
 
             return User(
                 id=data.get('id'),

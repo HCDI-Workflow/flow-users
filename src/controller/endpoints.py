@@ -39,7 +39,6 @@ bp = Blueprint('user-endpoints', __name__, url_prefix='/api/user')
 
 
 def auth_user_profile(access_token, user_dto_response):
-    print(f'User DTO: {user_dto_response}')
     if user_dto_response is None:
         return {'error': "No User"}
     user_type = {
@@ -68,7 +67,6 @@ def create_user():
 
     created_user = result.get('resource')
     status = result['status']
-    print(f'user result: {result}\n Created user: {created_user}')
     access_token = create_access_token(identity=created_user['id'])
 
     # user_profile = UserDTO.from_model(created_user)
@@ -82,7 +80,6 @@ def create_user():
     else:
         response = make_response(jsonify(safe_to_return), 201)
 
-    print('Response: ', response)
     return response
 
 
@@ -92,7 +89,6 @@ def login_user():
     Login using email password
     """
     data = request.get_json()
-    print(f'Login data: {data}')
 
     # Make sure fields are there
     required_fields = ['email', 'password']
@@ -111,7 +107,6 @@ def login_user():
         # Use if just want logged in confirmation
         response = make_response(jsonify(auth_user), 200)
 
-        print(f'User: {response}')
         if app.config['JWT_TOKEN_LOCATION'] == ['cookies']:
             set_access_cookies(response, access_token)  # Set the JWT as a cookie in the response
         return response

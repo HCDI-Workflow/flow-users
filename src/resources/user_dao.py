@@ -18,8 +18,8 @@ logger = logging.getLogger()
 db = SQLAlchemy()
 
 def get_user_by_email(email):
-    engine = manager.connect_with_connector()
-
+    engine = manager.connect_with_connector(is_local=True)
+    
     query = sqlalchemy.text("SELECT * FROM users WHERE email = :email;")
     with engine.connect() as connection:
         # result = connection.execute(query, {'email': email}).fetchall()
@@ -47,7 +47,8 @@ class UserDAO:
         Returns a user instance
         """
         
-        engine = manager.connect_with_connector()
+        engine = manager.connect_with_connector(is_local=True)
+        
 
         query = sqlalchemy.text("SELECT * FROM users WHERE id = :id;")
         with engine.connect() as connection:
@@ -87,7 +88,8 @@ class UserDAO:
         - dict (status and resource). resource is a dictionary, status is a string       
         
         """
-        engine = manager.connect_with_connector()
+        engine = manager.connect_with_connector(is_local=True)
+        
 
         # SQL query to insert a new user and return the created record
         query = sqlalchemy.text("""
@@ -129,7 +131,9 @@ class UserDAO:
         """
         Update an existing user's details.
         """
-        engine = manager.connect_with_connector()
+        engine = manager.connect_with_connector(is_local=True)
+        
+
         query = sqlalchemy.text(f"""
             UPDATE users SET 
             username = :username, 
@@ -158,7 +162,9 @@ class UserDAO:
         """
         Delete a user from the database.
         """
-        engine = manager.connect_with_connector()
+        engine = manager.connect_with_connector(is_local=True)
+        
+
         query = sqlalchemy.text("DELETE FROM users WHERE id = :id;")
         try:
             with engine.connect() as connection:
@@ -182,7 +188,8 @@ class UserDAO:
 
         Returns as None or as a user model
         """
-        engine = manager.connect_with_connector()
+        engine = manager.connect_with_connector(is_local=True)
+        
 
         query = sqlalchemy.text("SELECT * FROM users WHERE email = :email;")
         with engine.connect() as connection:
@@ -216,7 +223,7 @@ class UserDAO:
         creates a new user in the database with the provided Google information.
         """
         database_manager = DatabaseManager()
-        engine = database_manager.connect_with_connector()
+        engine = database_manager.connect_with_connector(is_local=True)
 
         query_find_user = sqlalchemy.text("SELECT * FROM users WHERE email = :email;")
         user_data = {'email': google_info['email']}
