@@ -199,7 +199,7 @@ def get_user():
     return jsonify(error='User not found'), 404
 
 
-@bp.route('/', methods=['PUT'])
+@bp.route('/update', methods=['PUT'])
 @jwt_required()
 def update_user():
     """
@@ -240,7 +240,7 @@ def update_user():
     return jsonify(error=f"Failed to update {original['username']}'s account"), 404
 
 
-@bp.route('/', methods=['DELETE'])
+@bp.route('/delete', methods=['DELETE'])
 @jwt_required()
 def delete_user():
     """
