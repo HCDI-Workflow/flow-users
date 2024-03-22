@@ -82,3 +82,14 @@ Delete User
     Path: /api/user/
     Method: DELETE
     Description: Deletes the currently logged-in user's account.
+
+## Building with Docker
+
+````
+docker buildx create --use 
+
+docker buildx inspect --bootstrap
+
+docker buildx build -t <USERNAME>/users-services --push --platform linux/arm64,linux/amd64 .
+````
+---

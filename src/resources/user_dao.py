@@ -18,7 +18,7 @@ logger = logging.getLogger()
 db = SQLAlchemy()
 
 def get_user_by_email(email):
-    engine = manager.connect_with_connector(is_local=True)
+    engine = manager.connect_with_connector(is_local=False)
     
     query = sqlalchemy.text("SELECT * FROM users WHERE email = :email;")
     with engine.connect() as connection:
@@ -47,7 +47,7 @@ class UserDAO:
         Returns a user instance
         """
         
-        engine = manager.connect_with_connector(is_local=True)
+        engine = manager.connect_with_connector(is_local=False)
         
 
         query = sqlalchemy.text("SELECT * FROM users WHERE id = :id;")
@@ -88,7 +88,7 @@ class UserDAO:
         - dict (status and resource). resource is a dictionary, status is a string       
         
         """
-        engine = manager.connect_with_connector(is_local=True)
+        engine = manager.connect_with_connector(is_local=False)
         
 
         # SQL query to insert a new user and return the created record
@@ -131,7 +131,7 @@ class UserDAO:
         """
         Update an existing user's details.
         """
-        engine = manager.connect_with_connector(is_local=True)
+        engine = manager.connect_with_connector(is_local=False)
         
 
         query = sqlalchemy.text(f"""
@@ -162,7 +162,7 @@ class UserDAO:
         """
         Delete a user from the database.
         """
-        engine = manager.connect_with_connector(is_local=True)
+        engine = manager.connect_with_connector(is_local=False)
         
 
         query = sqlalchemy.text("DELETE FROM users WHERE id = :id;")
@@ -188,7 +188,7 @@ class UserDAO:
 
         Returns as None or as a user model
         """
-        engine = manager.connect_with_connector(is_local=True)
+        engine = manager.connect_with_connector(is_local=False)
         
 
         query = sqlalchemy.text("SELECT * FROM users WHERE email = :email;")
@@ -223,7 +223,7 @@ class UserDAO:
         creates a new user in the database with the provided Google information.
         """
         database_manager = DatabaseManager()
-        engine = database_manager.connect_with_connector(is_local=True)
+        engine = database_manager.connect_with_connector(is_local=False)
 
         query_find_user = sqlalchemy.text("SELECT * FROM users WHERE email = :email;")
         user_data = {'email': google_info['email']}

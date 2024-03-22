@@ -23,7 +23,7 @@ EXPOSE 9090
 
 # Define environment variable
 ENV FLASK_APP=.env.py
-ENV GOOGLE_APPLICATION_CREDENTIALS=./certs/flow-db-key.json
+ENV GOOGLE_APPLICATION_CREDENTIALS=./certs/db-admin-key.json
 
 # Run app.py when the container launches
 CMD ["python", "src/server.py", "--host=0.0.0.0"]
